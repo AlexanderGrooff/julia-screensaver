@@ -3,6 +3,7 @@ from cmath import pi, exp
 from multiprocessing import Pool
 import numpy as np
 from PIL import Image
+import argparse
 
 screenSizeX = 1920
 screenSizeY = 1080
@@ -51,11 +52,11 @@ def rotateC(rotation):
     return 0.7885 * exp(complex(0, rotation)) 
 
 
-def drawImage(imgNrAndConst):
+def drawImage(imgNrAndConst, path=None):
     # Get arguments from tuple
     (imgNr, rotation) = imgNrAndConst
 
-    imagePath = "./img/bw-1280x1024/r_" + str(imgNr) + ".png"
+    imagePath = path or "./img/bw-1280x1024/r_" + str(imgNr) + ".png"
 
     # Don't create a new image if it already exists
     if os.path.exists(imagePath):
@@ -75,8 +76,21 @@ def drawImage(imgNrAndConst):
     print(imgNr, rotation)
     image.save(imagePath, 'png')
 
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--frame", help="Only generate the given frame", type=int)
+
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    # Multithread to 16 cores
-    with Pool(16) as pool:
-        # All angles from 0 to 2pi with pi/512 step intervals
-        pool.map(drawImage, enumerate(np.arange(0, 2 * pi, pi / 512)))
+    args = parse_args()
+    if args.frame:
+        rotation = (args.frame / 1024) * 2 * pi 
+        drawImage([args.frame, rotation], "frame{}.png".format(args.frame))
+    else:
+        # Multithread to 16 cores
+        with Pool(16) as pool:
+            # All angles from 0 to 2pi with pi/512 step intervals
+            pool.map(drawImage, enumerate(np.arange(0, 2 * pi, pi / 512)))
